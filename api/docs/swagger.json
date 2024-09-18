@@ -788,6 +788,9 @@
                 "id": {
                     "type": "string"
                 },
+                "lang": {
+                    "type": "string"
+                },
                 "num_pages": {
                     "type": "integer"
                 },
@@ -806,6 +809,9 @@
                     "type": "string"
                 },
                 "category": {
+                    "type": "string"
+                },
+                "lang": {
                     "type": "string"
                 },
                 "num_pages": {

@@ -799,6 +799,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "lang": {
+                    "type": "string"
+                },
                 "num_pages": {
                     "type": "integer"
                 },
@@ -817,6 +820,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "category": {
+                    "type": "string"
+                },
+                "lang": {
                     "type": "string"
                 },
                 "num_pages": {
