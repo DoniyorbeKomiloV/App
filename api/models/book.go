@@ -7,6 +7,7 @@ type Book struct {
 	Publisher string `json:"publisher"`
 	Category  string `json:"category"`
 	NumPages  int    `json:"num_pages"`
+	Lang      string `json:"lang"`
 }
 
 type CreateBook struct {
@@ -15,6 +16,7 @@ type CreateBook struct {
 	Publisher string `json:"publisher"`
 	Category  string `json:"category"`
 	NumPages  int    `json:"num_pages"`
+	Lang      string `json:"lang"`
 }
 
 type UpdateBook struct {
@@ -24,6 +26,7 @@ type UpdateBook struct {
 	Publisher string `json:"publisher"`
 	Category  string `json:"category"`
 	NumPages  int    `json:"num_pages"`
+	Lang      string `json:"lang"`
 }
 
 type BookGetListRequest struct {

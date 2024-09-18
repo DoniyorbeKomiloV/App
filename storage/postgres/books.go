@@ -16,9 +16,9 @@ type BookRepo struct {
 
 func (s BookRepo) Create(ctx context.Context, req *models.CreateBook) (string, error) {
 	var id = uuid.New().String()
-	query := `INSERT INTO books(id, title, author, publisher, category, num_pages) VALUES ($1, $2, $3, $4, $5, $6)`
+	query := `INSERT INTO books(id, title, author, publisher, category, num_pages, lang) VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
-	_, err := s.db.Exec(ctx, query, id, req.Title, req.Author, req.Publisher, req.Category, req.NumPages)
+	_, err := s.db.Exec(ctx, query, id, req.Title, req.Author, req.Publisher, req.Category, req.NumPages, req.Lang)
 
 	if err != nil {
 		return "", err
@@ -34,7 +34,8 @@ func (s BookRepo) Update(ctx context.Context, req *models.UpdateBook) (int64, er
 		    author = :author, 
 		    publisher = :publisher,
 		    category = :category, 
-		    num_pages = :num_pages
+		    num_pages = :num_pages,
+			lang = :lang
 		WHERE id = :id`
 
 	params = map[string]interface{}{
@@ -44,6 +45,7 @@ func (s BookRepo) Update(ctx context.Context, req *models.UpdateBook) (int64, er
 		"publisher": req.Publisher,
 		"category":  req.Category,
 		"num_pages": req.NumPages,
+		"lang":      req.Lang,
 	}
 
 	query, args := helper.ReplaceQueryParams(query, params)
@@ -64,9 +66,10 @@ func (s BookRepo) GetById(ctx context.Context, req *models.BookPrimaryKey) (*mod
 		publisher sql.NullString
 		category  sql.NullString
 		numPages  int
+		lang      sql.NullString
 	)
 
-	query := `SELECT id, title, author, publisher, category, num_pages FROM books WHERE id = $1 AND is_deleted = 'False'`
+	query := `SELECT id, title, author, publisher, category, num_pages, lang FROM books WHERE id = $1 AND is_deleted = 'False'`
 
 	err := s.db.QueryRow(ctx, query, req.Id).Scan(
 		&id,
@@ -75,6 +78,7 @@ func (s BookRepo) GetById(ctx context.Context, req *models.BookPrimaryKey) (*mod
 		&publisher,
 		&category,
 		&numPages,
+		&lang,
 	)
 
 	if err != nil {
@@ -88,6 +92,7 @@ func (s BookRepo) GetById(ctx context.Context, req *models.BookPrimaryKey) (*mod
 		Publisher: publisher.String,
 		Category:  category.String,
 		NumPages:  numPages,
+		Lang:      lang.String,
 	}, nil
 }
 
@@ -99,7 +104,7 @@ func (s BookRepo) GetList(ctx context.Context, req *models.BookGetListRequest) (
 		limit  = " LIMIT 10"
 		//order  = " ORDER BY created_at DESC "
 	)
-	query := `SELECT COUNT(*) OVER(), id, title, author, publisher, category, num_pages FROM books`
+	query := `SELECT COUNT(*) OVER(), id, title, author, publisher, category, num_pages, lang FROM books`
 	if req.Offset > 0 {
 		offset = fmt.Sprintf(" OFFSET %d", req.Offset)
 	}
@@ -129,6 +134,7 @@ func (s BookRepo) GetList(ctx context.Context, req *models.BookGetListRequest) (
 			publisher sql.NullString
 			category  sql.NullString
 			numPages  int
+			lang      sql.NullString
 		)
 		err := rows.Scan(
 			&count,
@@ -138,6 +144,7 @@ func (s BookRepo) GetList(ctx context.Context, req *models.BookGetListRequest) (
 			&publisher,
 			&category,
 			&numPages,
+			&lang,
 		)
 		if err != nil {
 			return nil, err
@@ -151,6 +158,7 @@ func (s BookRepo) GetList(ctx context.Context, req *models.BookGetListRequest) (
 				Publisher: publisher.String,
 				Category:  category.String,
 				NumPages:  numPages,
+				Lang:      lang.String,
 			})
 		resp.Count = count
 	}
