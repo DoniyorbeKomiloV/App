@@ -1,0 +1,33 @@
+name: Deploy Backend and Frontend to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Debug
+        run: |
+          echo "Deploying to host: ${{ secrets.VPS_IP }}"
+          echo "Username: ${{ secrets.VPS_USERNAME }}"
+          echo "SSH Key is set: ${{ secrets.SSH_PRIVATE_KEY != '' }}"
+          
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /opt/App
+            git pull origin main
+            go build -o booklend
+            sudo systemctl restart booklend.service
+            
