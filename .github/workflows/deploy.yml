@@ -3,7 +3,7 @@ name: Deploy Backend and Frontend to VPS
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
@@ -27,7 +27,8 @@ jobs:
           port: 22
           script: |
             cd /opt/App
-            git pull origin main
+            git pull origin master
+            cd cmd/
             go build -o booklend
             sudo systemctl restart booklend.service
             
