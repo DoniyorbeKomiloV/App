@@ -9,9 +9,10 @@ import (
 )
 
 type store struct {
-	db   *pgxpool.Pool
-	book *BookRepo
-	user *UserRepo
+	db    *pgxpool.Pool
+	book  *BookRepo
+	user  *UserRepo
+	order *OrderRepo
 }
 
 func (s *store) Books() storage.BookRepoInterface {
@@ -26,6 +27,13 @@ func (s *store) Users() storage.UserRepoInterface {
 		s.user = NewUserRepo(s.db)
 	}
 	return s.user
+}
+
+func (s *store) Order() storage.OrderRepoInterface {
+	if s.order == nil {
+		s.order = NewOrderRepo(s.db)
+	}
+	return s.order
 }
 
 func NewConnectionPostgres(cfg *config.Config) (storage.StorageInterface, error) {

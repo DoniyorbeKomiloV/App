@@ -9,6 +9,7 @@ type StorageInterface interface {
 	Close()
 	Books() BookRepoInterface
 	Users() UserRepoInterface
+	Order() OrderRepoInterface
 }
 
 type BookRepoInterface interface {
@@ -25,4 +26,12 @@ type UserRepoInterface interface {
 	GetById(ctx context.Context, req *models.UserPrimaryKey) (*models.User, error)
 	GetList(ctx context.Context, req *models.UserGetListRequest) (*models.UserGetListResponse, error)
 	Delete(ctx context.Context, req *models.UserPrimaryKey) error
+}
+
+type OrderRepoInterface interface {
+	Create(ctx context.Context, req *models.CreateOrder) (string, error)
+	Update(ctx context.Context, req *models.UpdateOrder) (int64, error)
+	GetById(ctx context.Context, req *models.OrderPrimaryKey) (*models.Order, error)
+	GetList(ctx context.Context, req *models.OrderGetListRequest) (*models.OrderGetListResponse, error)
+	Delete(ctx context.Context, req *models.OrderPrimaryKey) error
 }
