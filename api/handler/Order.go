@@ -23,7 +23,7 @@ func (h *Handler) CreateOrder(c *gin.Context) {
 	var createOrder *models.CreateOrder
 	err := c.ShouldBindJSON(&createOrder)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, map[string]interface{}{
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"status":  "Error",
 			"message": "Bad Request",
 			"data":    err.Error(),

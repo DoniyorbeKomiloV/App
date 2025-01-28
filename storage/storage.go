@@ -7,9 +7,11 @@ import (
 
 type StorageInterface interface {
 	Close()
-	Books() BookRepoInterface
 	Users() UserRepoInterface
+	Category() CategoryRepoInterface
+	Books() BookRepoInterface
 	Order() OrderRepoInterface
+	OrderItem() OrderItemRepoInterface
 }
 
 type BookRepoInterface interface {
@@ -28,10 +30,26 @@ type UserRepoInterface interface {
 	Delete(ctx context.Context, req *models.UserPrimaryKey) error
 }
 
+type CategoryRepoInterface interface {
+	Create(ctx context.Context, req *models.CreateCategory) (string, error)
+	Update(ctx context.Context, req *models.UpdateCategory) (int64, error)
+	GetById(ctx context.Context, req *models.CategoryPrimaryKey) (*models.Category, error)
+	GetList(ctx context.Context, req *models.CategoryGetListRequest) (*models.CategoryGetListResponse, error)
+	Delete(ctx context.Context, req *models.CategoryPrimaryKey) error
+}
+
 type OrderRepoInterface interface {
 	Create(ctx context.Context, req *models.CreateOrder) (string, error)
 	Update(ctx context.Context, req *models.UpdateOrder) (int64, error)
 	GetById(ctx context.Context, req *models.OrderPrimaryKey) (*models.Order, error)
 	GetList(ctx context.Context, req *models.OrderGetListRequest) (*models.OrderGetListResponse, error)
 	Delete(ctx context.Context, req *models.OrderPrimaryKey) error
+}
+
+type OrderItemRepoInterface interface {
+	Create(ctx context.Context, req *models.CreateOrderItem) (string, error)
+	Update(ctx context.Context, req *models.UpdateOrderItem) (int64, error)
+	GetById(ctx context.Context, req *models.OrderItemPrimaryKey) (*models.OrderItem, error)
+	GetList(ctx context.Context, req *models.OrderItemGetListRequest) (*models.OrderItemGetListResponse, error)
+	Delete(ctx context.Context, req *models.OrderItemPrimaryKey) error
 }

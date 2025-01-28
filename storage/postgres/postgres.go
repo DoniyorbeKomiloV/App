@@ -9,17 +9,12 @@ import (
 )
 
 type store struct {
-	db    *pgxpool.Pool
-	book  *BookRepo
-	user  *UserRepo
-	order *OrderRepo
-}
-
-func (s *store) Books() storage.BookRepoInterface {
-	if s.book == nil {
-		s.book = NewBookRepo(s.db)
-	}
-	return s.book
+	db        *pgxpool.Pool
+	user      *UserRepo
+	category  *CategoryRepo
+	book      *BookRepo
+	order     *OrderRepo
+	orderItem *OrderItemRepo
 }
 
 func (s *store) Users() storage.UserRepoInterface {
@@ -29,11 +24,32 @@ func (s *store) Users() storage.UserRepoInterface {
 	return s.user
 }
 
+func (s *store) Category() storage.CategoryRepoInterface {
+	if s.category == nil {
+		s.category = NewCategoryRepo(s.db)
+	}
+	return s.category
+}
+
+func (s *store) Books() storage.BookRepoInterface {
+	if s.book == nil {
+		s.book = NewBookRepo(s.db)
+	}
+	return s.book
+}
+
 func (s *store) Order() storage.OrderRepoInterface {
 	if s.order == nil {
 		s.order = NewOrderRepo(s.db)
 	}
 	return s.order
+}
+
+func (s *store) OrderItem() storage.OrderItemRepoInterface {
+	if s.orderItem == nil {
+		s.orderItem = NewOrderItemRepo(s.db)
+	}
+	return s.orderItem
 }
 
 func NewConnectionPostgres(cfg *config.Config) (storage.StorageInterface, error) {

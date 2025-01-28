@@ -29,6 +29,7 @@ type Config struct {
 
 	DefaultOffset int
 	DefaultLimit  int
+	SecretKey     string
 }
 
 func Load() Config {
@@ -48,15 +49,16 @@ func Load() Config {
 	cfg.HTTPPort = cast.ToString(getOrReturnDefaultValue("HTTP_PORT", "8000"))
 
 	cfg.PostgresHost = cast.ToString(getOrReturnDefaultValue("POSTGRES_HOST", "localhost"))
-	cfg.PostgresUser = cast.ToString(getOrReturnDefaultValue("POSTGRES_USER", "postgres"))
-	cfg.PostgresDatabase = cast.ToString(getOrReturnDefaultValue("POSTGRES_DATABASE", "postgres"))
-	cfg.PostgresPassword = cast.ToString(getOrReturnDefaultValue("POSTGRES_PASSWORD", "123123"))
+	cfg.PostgresUser = cast.ToString(getOrReturnDefaultValue("POSTGRES_USER", "doniy"))
+	cfg.PostgresDatabase = cast.ToString(getOrReturnDefaultValue("POSTGRES_DATABASE", "app"))
+	cfg.PostgresPassword = cast.ToString(getOrReturnDefaultValue("POSTGRES_PASSWORD", "1901dony2003"))
 	cfg.PostgresPort = cast.ToInt(getOrReturnDefaultValue("POSTGRES_PORT", 5432))
 
 	cfg.PostgresMaxConnection = cast.ToInt32(getOrReturnDefaultValue("POSTGRES_MAX_CONNECTIONS", 30))
 
 	cfg.DefaultOffset = cast.ToInt(getOrReturnDefaultValue("OFFSET", 0))
 	cfg.DefaultLimit = cast.ToInt(getOrReturnDefaultValue("LIMIT", 10))
+	cfg.SecretKey = cast.ToString(getOrReturnDefaultValue("SECRET_KEY", "SECRET"))
 	return cfg
 }
 

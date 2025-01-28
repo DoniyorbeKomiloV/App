@@ -7,21 +7,21 @@ import (
 	"strconv"
 )
 
-// CreateBook godoc
-// @ID create_book
-// @Router /books [POST]
-// @Summary Create Book
-// @Description Create Book
-// @Tags Book
+// CreateCategory godoc
+// @ID create_category
+// @Router /categories [POST]
+// @Summary Create Category
+// @Description Create Category
+// @Tags Category
 // @Accept json
 // @Procedure json
-// @Param user body models.CreateBook true "CreateBookRequest"
+// @Param user body models.CreateCategory true "CreateCategoryRequest"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) CreateBook(c *gin.Context) {
-	var createBook *models.CreateBook
-	err := c.ShouldBindJSON(&createBook)
+func (h *Handler) CreateCategory(c *gin.Context) {
+	var createCategory *models.CreateCategory
+	err := c.ShouldBindJSON(&createCategory)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"status":  "Error",
@@ -31,7 +31,7 @@ func (h *Handler) CreateBook(c *gin.Context) {
 		return
 	}
 
-	BookId, err := h.strg.Books().Create(c.Request.Context(), createBook)
+	CategoryId, err := h.strg.Category().Create(c.Request.Context(), createCategory)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
@@ -40,7 +40,7 @@ func (h *Handler) CreateBook(c *gin.Context) {
 		})
 		return
 	}
-	Book, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: BookId})
+	Category, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: CategoryId})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
@@ -62,38 +62,38 @@ func (h *Handler) CreateBook(c *gin.Context) {
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"status":  "OK",
 		"message": "User created",
-		"data":    Book,
+		"data":    Category,
 	})
 }
 
-// UpdateBook godoc
-// @ID update_book
-// @Router /books [PUT]
-// @Summary Update Book
-// @Description Update Book
-// @Tags Book
+// UpdateCategory godoc
+// @ID update_category
+// @Router /categories [PUT]
+// @Summary Update Category
+// @Description Update Category
+// @Tags Category
 // @Accept json
 // @Procedure json
-// @Param user body models.Book true "UpdateBookRequest"
+// @Param user body models.UpdateCategory true "UpdateCategoryRequest"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) UpdateBook(c *gin.Context) {
-	var book models.UpdateBook
-	err := c.ShouldBindJSON(&book)
+func (h *Handler) UpdateCategory(c *gin.Context) {
+	var category models.UpdateCategory
+	err := c.ShouldBindJSON(&category)
 	if err != nil {
-		c.JSON(401, map[string]interface{}{
+		c.JSON(400, map[string]interface{}{
 			"status":  "error",
 			"message": "Bad request",
 			"data":    err.Error(),
 		})
 		return
 	}
-	resp, err := h.strg.Books().Update(c.Request.Context(), &book)
+	resp, err := h.strg.Category().Update(c.Request.Context(), &category)
 	if err != nil {
 		c.JSON(500, map[string]interface{}{
 			"status":  "error",
-			"message": "Error while UpdateBook",
+			"message": "Error while UpdateCategory",
 			"data":    err.Error(),
 		})
 		return
@@ -105,21 +105,21 @@ func (h *Handler) UpdateBook(c *gin.Context) {
 	})
 }
 
-// GetByIdBook godoc
-// @ID get_by_id_book
-// @Router /books/{id} [GET]
-// @Summary Get By ID Book
-// @Description Get By ID Book
-// @Tags Book
+// GetByIdCategory godoc
+// @ID get_by_id_category
+// @Router /categories/{id} [GET]
+// @Summary Get By ID Category
+// @Description Get By ID Category
+// @Tags Category
 // @Accept json
 // @Procedure json
 // @Param id path string true "id"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) GetByIdBook(c *gin.Context) {
+func (h *Handler) GetByIdCategory(c *gin.Context) {
 	var id = c.Param("id")
-	book, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: id})
+	category, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "Error",
@@ -130,23 +130,23 @@ func (h *Handler) GetByIdBook(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"status":  "OK",
-		"message": "Book found",
-		"data":    book,
+		"message": "Category found",
+		"data":    category,
 	})
 }
 
-// GetListBooks godoc
-// @ID get_list_book
-// @Router /books [GET]
-// @Summary Get List Books
-// @Description Get List Books
-// @Tags Book
+// GetListCategories godoc
+// @ID get_list_category
+// @Router /categories [GET]
+// @Summary Get List Categories
+// @Description Get List Categories
+// @Tags Category
 // @Accept json
 // @Procedure jsonUser
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) GetListBooks(c *gin.Context) {
+func (h *Handler) GetListCategories(c *gin.Context) {
 	offset, err := strconv.Atoi(c.Query("offset"))
 	if err != nil {
 		offset = 0
@@ -155,45 +155,45 @@ func (h *Handler) GetListBooks(c *gin.Context) {
 	if err != nil {
 		limit = 10
 	}
-	resp, err := h.strg.Books().GetList(c.Request.Context(), &models.BookGetListRequest{
+	resp, err := h.strg.Category().GetList(c.Request.Context(), &models.CategoryGetListRequest{
 		Offset: offset,
 		Limit:  limit,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "Error",
-			"message": "Error while GetListBooks",
+			"message": "Error while GetListCategories",
 			"data":    err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"status":  "OK",
-		"message": "get list book response",
+		"message": "get list category response",
 		"data":    resp,
 	})
 }
 
-// DeleteBook godoc
-// @ID delete_book
-// @Router /books/{id} [DELETE]
-// @Summary Delete Book
-// @Description Delete Book
-// @Tags Book
+// DeleteCategory godoc
+// @ID delete_category
+// @Router /categories/{id} [DELETE]
+// @Summary Delete Category
+// @Description Delete Category
+// @Tags Category
 // @Accept json
 // @Procedure json
 // @Param id path string true "id"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) DeleteBook(c *gin.Context) {
+func (h *Handler) DeleteCategory(c *gin.Context) {
 	var id = c.Param("id")
 
-	err := h.strg.Books().Delete(c.Request.Context(), &models.BookPrimaryKey{Id: id})
+	err := h.strg.Category().Delete(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
-			"message": "Error while DeleteBook",
+			"message": "Error while DeleteCategory",
 			"data":    err.Error(),
 		})
 		return

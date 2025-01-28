@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/spf13/cast"
 )
 
 type UserRepo struct {
@@ -15,11 +16,10 @@ type UserRepo struct {
 }
 
 func (s UserRepo) Create(ctx context.Context, req *models.CreateUser) (string, error) {
-	var id = uuid.New().String()
-	query := `INSERT INTO users(id, first_name, last_name, age, phone, password, card_no) VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	var id = cast.ToString(uuid.New())
+	query := `INSERT INTO users(id, first_name, last_name, age, phone, picture, username, password, card_no) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-	_, err := s.db.Exec(ctx, query, id, req.FirstName, req.LastName, req.Age, req.Phone, req.Password, req.CardNo)
-
+	_, err := s.db.Exec(ctx, query, id, req.FirstName, req.LastName, req.Age, req.Phone, req.Picture, req.Username, req.Password, req.CardNo)
 	if err != nil {
 		return "", err
 	}
@@ -34,8 +34,11 @@ func (s UserRepo) Update(ctx context.Context, req *models.UpdateUser) (int64, er
 		    last_name = :last_name, 
 		    age = :age,
 		    phone = :phone, 
+		    picture = :picture,
+		    username = :username,
 		    password = :password,
-		    card_no = :card_no
+		    card_no = :card_no,
+		    updated_at = now()
 		WHERE id = :id`
 
 	params = map[string]interface{}{
@@ -44,6 +47,8 @@ func (s UserRepo) Update(ctx context.Context, req *models.UpdateUser) (int64, er
 		"last_name":  req.LastName,
 		"age":        req.Age,
 		"phone":      req.Phone,
+		"picture":    req.Picture,
+		"username":   req.Username,
 		"password":   req.Password,
 		"card_no":    req.CardNo,
 	}
@@ -65,18 +70,25 @@ func (s UserRepo) GetById(ctx context.Context, req *models.UserPrimaryKey) (*mod
 		lastName  sql.NullString
 		age       int
 		phone     sql.NullString
+		picture   sql.NullString
+		username  sql.NullString
 		password  sql.NullString
 		cardNo    sql.NullString
 	)
 
-	query := `SELECT id, first_name, last_name, age, phone, password, card_no FROM users WHERE id = $1 AND is_deleted = FALSE`
-
+	query := `SELECT id, first_name, last_name, age, phone, picture, username, password, card_no FROM users WHERE id = $1 AND is_deleted = FALSE`
+	if req.Id == "" {
+		query = `SELECT id, first_name, last_name, age, phone, picture, username, password, card_no FROM users WHERE username = $1 AND is_deleted = FALSE`
+		req.Id = req.Username
+	}
 	err := s.db.QueryRow(ctx, query, req.Id).Scan(
 		&id,
 		&firstName,
 		&lastName,
 		&age,
 		&phone,
+		&picture,
+		&username,
 		&password,
 		&cardNo,
 	)
@@ -91,6 +103,8 @@ func (s UserRepo) GetById(ctx context.Context, req *models.UserPrimaryKey) (*mod
 		LastName:  lastName.String,
 		Age:       age,
 		Phone:     phone.String,
+		Picture:   picture.String,
+		Username:  username.String,
 		Password:  password.String,
 		CardNo:    cardNo.String,
 	}, nil
@@ -104,7 +118,7 @@ func (s UserRepo) GetList(ctx context.Context, req *models.UserGetListRequest) (
 		limit  = " LIMIT 10"
 		//order  = " ORDER BY created_at DESC "
 	)
-	query := `SELECT COUNT(*) OVER(), id, first_name, last_name, age, phone, password, card_no FROM users`
+	query := `SELECT COUNT(*) OVER(), id, first_name, last_name, age, phone, picture, username, password, card_no FROM users`
 	if req.Offset > 0 {
 		offset = fmt.Sprintf(" OFFSET %d", req.Offset)
 	}
@@ -133,6 +147,8 @@ func (s UserRepo) GetList(ctx context.Context, req *models.UserGetListRequest) (
 			lastName  sql.NullString
 			age       int
 			phone     sql.NullString
+			picture   sql.NullString
+			username  sql.NullString
 			password  sql.NullString
 			cardNo    sql.NullString
 		)
@@ -143,6 +159,8 @@ func (s UserRepo) GetList(ctx context.Context, req *models.UserGetListRequest) (
 			&lastName,
 			&age,
 			&phone,
+			&picture,
+			&username,
 			&password,
 			&cardNo,
 		)
@@ -157,6 +175,8 @@ func (s UserRepo) GetList(ctx context.Context, req *models.UserGetListRequest) (
 				LastName:  lastName.String,
 				Age:       age,
 				Phone:     phone.String,
+				Picture:   picture.String,
+				Username:  username.String,
 				Password:  password.String,
 				CardNo:    cardNo.String,
 			})
@@ -167,7 +187,7 @@ func (s UserRepo) GetList(ctx context.Context, req *models.UserGetListRequest) (
 }
 
 func (s UserRepo) Delete(ctx context.Context, req *models.UserPrimaryKey) error {
-	_, err := s.db.Exec(ctx, "UPDATE users SET is_deleted = true WHERE id = $1", req.Id)
+	_, err := s.db.Exec(ctx, "UPDATE users SET is_deleted = true, updated_at = now() WHERE id = $1", req.Id)
 	return err
 }
 

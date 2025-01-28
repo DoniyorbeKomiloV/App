@@ -6,6 +6,8 @@ type User struct {
 	LastName  string `json:"last_name"`
 	Age       int    `json:"age"`
 	Phone     string `json:"phone"`
+	Picture   string `json:"picture"`
+	Username  string `json:"username"`
 	Password  string `json:"password"`
 	CardNo    string `json:"card_no"`
 }
@@ -15,6 +17,8 @@ type CreateUser struct {
 	LastName  string `json:"last_name"`
 	Age       int    `json:"age"`
 	Phone     string `json:"phone"`
+	Picture   string `json:"picture"`
+	Username  string `json:"username"`
 	Password  string `json:"password"`
 	CardNo    string `json:"card_no"`
 }
@@ -25,6 +29,8 @@ type UpdateUser struct {
 	LastName  string `json:"last_name"`
 	Age       int    `json:"age"`
 	Phone     string `json:"phone"`
+	Picture   string `json:"picture"`
+	Username  string `json:"username"`
 	Password  string `json:"password"`
 	CardNo    string `json:"card_no"`
 }
@@ -42,4 +48,9 @@ type UserGetListResponse struct {
 type UserPrimaryKey struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
+}
+
+type UserLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }

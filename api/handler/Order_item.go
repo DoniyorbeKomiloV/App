@@ -7,21 +7,21 @@ import (
 	"strconv"
 )
 
-// CreateBook godoc
-// @ID create_book
-// @Router /books [POST]
-// @Summary Create Book
-// @Description Create Book
-// @Tags Book
+// CreateOrderItem godoc
+// @ID create_OrderItem
+// @Router /order_items [POST]
+// @Summary Create OrderItem
+// @Description Create OrderItem
+// @Tags OrderItem
 // @Accept json
 // @Procedure json
-// @Param user body models.CreateBook true "CreateBookRequest"
+// @Param user body models.CreateOrderItem true "CreateOrderItemRequest"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) CreateBook(c *gin.Context) {
-	var createBook *models.CreateBook
-	err := c.ShouldBindJSON(&createBook)
+func (h *Handler) CreateOrderItem(c *gin.Context) {
+	var createOrderItem *models.CreateOrderItem
+	err := c.ShouldBindJSON(&createOrderItem)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"status":  "Error",
@@ -31,7 +31,7 @@ func (h *Handler) CreateBook(c *gin.Context) {
 		return
 	}
 
-	BookId, err := h.strg.Books().Create(c.Request.Context(), createBook)
+	OrderItemId, err := h.strg.OrderItem().Create(c.Request.Context(), createOrderItem)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
@@ -40,16 +40,7 @@ func (h *Handler) CreateBook(c *gin.Context) {
 		})
 		return
 	}
-	Book, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: BookId})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
-		return
-
-	}
+	OrderItem, err := h.strg.OrderItem().GetById(c.Request.Context(), &models.OrderItemPrimaryKey{ItemId: OrderItemId})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
@@ -59,67 +50,67 @@ func (h *Handler) CreateBook(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
+	c.JSON(http.StatusCreated, map[string]interface{}{
 		"status":  "OK",
 		"message": "User created",
-		"data":    Book,
+		"data":    OrderItem,
 	})
 }
 
-// UpdateBook godoc
-// @ID update_book
-// @Router /books [PUT]
-// @Summary Update Book
-// @Description Update Book
-// @Tags Book
+// UpdateOrderItem godoc
+// @ID update_OrderItem
+// @Router /order_items [PUT]
+// @Summary Update OrderItem
+// @Description Update OrderItem
+// @Tags OrderItem
 // @Accept json
 // @Procedure json
-// @Param user body models.Book true "UpdateBookRequest"
+// @Param user body models.OrderItem true "UpdateOrderItemRequest"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) UpdateBook(c *gin.Context) {
-	var book models.UpdateBook
-	err := c.ShouldBindJSON(&book)
+func (h *Handler) UpdateOrderItem(c *gin.Context) {
+	var OrderItem models.UpdateOrderItem
+	err := c.ShouldBindJSON(&OrderItem)
 	if err != nil {
-		c.JSON(401, map[string]interface{}{
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"status":  "error",
 			"message": "Bad request",
 			"data":    err.Error(),
 		})
 		return
 	}
-	resp, err := h.strg.Books().Update(c.Request.Context(), &book)
+	resp, err := h.strg.OrderItem().Update(c.Request.Context(), &OrderItem)
 	if err != nil {
-		c.JSON(500, map[string]interface{}{
+		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
-			"message": "Error while UpdateBook",
+			"message": "Error while UpdateOrderItem",
 			"data":    err.Error(),
 		})
 		return
 	}
-	c.JSON(200, map[string]interface{}{
+	c.JSON(http.StatusCreated, map[string]interface{}{
 		"status":  "OK",
 		"message": "Success",
 		"data":    resp,
 	})
 }
 
-// GetByIdBook godoc
-// @ID get_by_id_book
-// @Router /books/{id} [GET]
-// @Summary Get By ID Book
-// @Description Get By ID Book
-// @Tags Book
+// GetByIdOrderItem godoc
+// @ID get_by_id_OrderItem
+// @Router /order_items/{id} [GET]
+// @Summary Get By ID OrderItem
+// @Description Get By ID OrderItem
+// @Tags OrderItem
 // @Accept json
 // @Procedure json
 // @Param id path string true "id"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) GetByIdBook(c *gin.Context) {
+func (h *Handler) GetByIdOrderItem(c *gin.Context) {
 	var id = c.Param("id")
-	book, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: id})
+	OrderItem, err := h.strg.OrderItem().GetById(c.Request.Context(), &models.OrderItemPrimaryKey{ItemId: id})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "Error",
@@ -130,23 +121,23 @@ func (h *Handler) GetByIdBook(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"status":  "OK",
-		"message": "Book found",
-		"data":    book,
+		"message": "OrderItem found",
+		"data":    OrderItem,
 	})
 }
 
-// GetListBooks godoc
-// @ID get_list_book
-// @Router /books [GET]
-// @Summary Get List Books
-// @Description Get List Books
-// @Tags Book
+// GetListOrderItems godoc
+// @ID get_list_OrderItem
+// @Router /order_items [GET]
+// @Summary Get List OrderItems
+// @Description Get List OrderItems
+// @Tags OrderItem
 // @Accept json
 // @Procedure jsonUser
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) GetListBooks(c *gin.Context) {
+func (h *Handler) GetListOrderItems(c *gin.Context) {
 	offset, err := strconv.Atoi(c.Query("offset"))
 	if err != nil {
 		offset = 0
@@ -155,45 +146,45 @@ func (h *Handler) GetListBooks(c *gin.Context) {
 	if err != nil {
 		limit = 10
 	}
-	resp, err := h.strg.Books().GetList(c.Request.Context(), &models.BookGetListRequest{
+	resp, err := h.strg.OrderItem().GetList(c.Request.Context(), &models.OrderItemGetListRequest{
 		Offset: offset,
 		Limit:  limit,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "Error",
-			"message": "Error while GetListBooks",
+			"message": "Error while GetListOrderItems",
 			"data":    err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"status":  "OK",
-		"message": "get list book response",
+		"message": "get list OrderItem response",
 		"data":    resp,
 	})
 }
 
-// DeleteBook godoc
-// @ID delete_book
-// @Router /books/{id} [DELETE]
-// @Summary Delete Book
-// @Description Delete Book
-// @Tags Book
+// DeleteOrderItem godoc
+// @ID delete_OrderItem
+// @Router /order_items/{id} [DELETE]
+// @Summary Delete OrderItem
+// @Description Delete OrderItem
+// @Tags OrderItem
 // @Accept json
 // @Procedure json
 // @Param id path string true "id"
 // @Success 200 {object} Response{data=string} "Success Request"
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
-func (h *Handler) DeleteBook(c *gin.Context) {
+func (h *Handler) DeleteOrderItem(c *gin.Context) {
 	var id = c.Param("id")
 
-	err := h.strg.Books().Delete(c.Request.Context(), &models.BookPrimaryKey{Id: id})
+	err := h.strg.OrderItem().Delete(c.Request.Context(), &models.OrderItemPrimaryKey{ItemId: id})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"status":  "error",
-			"message": "Error while DeleteBook",
+			"message": "Error while DeleteOrderItem",
 			"data":    err.Error(),
 		})
 		return

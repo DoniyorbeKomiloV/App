@@ -42,6 +42,7 @@ func main() {
 	}
 
 	r := gin.New()
+	r.MaxMultipartMemory = 8 << 20 // MiB
 
 	r.Use(gin.Recovery(), gin.Logger())
 
@@ -52,5 +53,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }

@@ -19,6 +19,8 @@ definitions:
         type: string
       num_pages:
         type: integer
+      picture:
+        type: string
       publisher:
         type: string
       title:
@@ -34,14 +36,32 @@ definitions:
         type: string
       num_pages:
         type: integer
+      picture:
+        type: string
       publisher:
         type: string
       title:
         type: string
     type: object
+  models.CreateCategory:
+    properties:
+      name:
+        type: string
+      picture:
+        type: string
+      type:
+        type: string
+    type: object
   models.CreateOrder:
     properties:
       user_id:
+        type: string
+    type: object
+  models.CreateOrderItem:
+    properties:
+      book_id:
+        type: string
+      order_id:
         type: string
     type: object
   models.CreateUser:
@@ -58,12 +78,36 @@ definitions:
         type: string
       phone:
         type: string
+      picture:
+        type: string
+      username:
+        type: string
     type: object
   models.Order:
     properties:
       order_id:
         type: string
       user_id:
+        type: string
+    type: object
+  models.OrderItem:
+    properties:
+      book_id:
+        type: string
+      item_id:
+        type: string
+      order_id:
+        type: string
+    type: object
+  models.UpdateCategory:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      picture:
+        type: string
+      type:
         type: string
     type: object
   models.User:
@@ -81,6 +125,17 @@ definitions:
       password:
         type: string
       phone:
+        type: string
+      picture:
+        type: string
+      username:
+        type: string
+    type: object
+  models.UserLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
         type: string
     type: object
 info:
@@ -294,6 +349,466 @@ paths:
       summary: Get By ID Book
       tags:
       - Book
+  /categories:
+    get:
+      consumes:
+      - application/json
+      description: Get List Categories
+      operationId: get_list_category
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Get List Categories
+      tags:
+      - Category
+    post:
+      consumes:
+      - application/json
+      description: Create Category
+      operationId: create_category
+      parameters:
+      - description: CreateCategoryRequest
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCategory'
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Create Category
+      tags:
+      - Category
+    put:
+      consumes:
+      - application/json
+      description: Update Category
+      operationId: update_category
+      parameters:
+      - description: UpdateCategoryRequest
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateCategory'
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Update Category
+      tags:
+      - Category
+  /categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Category
+      operationId: delete_category
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Delete Category
+      tags:
+      - Category
+    get:
+      consumes:
+      - application/json
+      description: Get By ID Category
+      operationId: get_by_id_category
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Get By ID Category
+      tags:
+      - Category
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      operationId: login
+      parameters:
+      - description: UserLoginRequest
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserLoginRequest'
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Login
+      tags:
+      - Auth
+  /order_items:
+    get:
+      consumes:
+      - application/json
+      description: Get List OrderItems
+      operationId: get_list_OrderItem
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Get List OrderItems
+      tags:
+      - OrderItem
+    post:
+      consumes:
+      - application/json
+      description: Create OrderItem
+      operationId: create_OrderItem
+      parameters:
+      - description: CreateOrderItemRequest
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateOrderItem'
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Create OrderItem
+      tags:
+      - OrderItem
+    put:
+      consumes:
+      - application/json
+      description: Update OrderItem
+      operationId: update_OrderItem
+      parameters:
+      - description: UpdateOrderItemRequest
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.OrderItem'
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Update OrderItem
+      tags:
+      - OrderItem
+  /order_items/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete OrderItem
+      operationId: delete_OrderItem
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Delete OrderItem
+      tags:
+      - OrderItem
+    get:
+      consumes:
+      - application/json
+      description: Get By ID OrderItem
+      operationId: get_by_id_OrderItem
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Get By ID OrderItem
+      tags:
+      - OrderItem
   /orders:
     get:
       consumes:
@@ -502,6 +1017,50 @@ paths:
       summary: Get By ID Order
       tags:
       - Order
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register
+      operationId: register
+      parameters:
+      - description: CreateUserRequest
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUser'
+      responses:
+        "200":
+          description: Success Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: Server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Register
+      tags:
+      - Auth
   /users:
     get:
       consumes:
