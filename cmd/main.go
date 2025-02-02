@@ -7,6 +7,9 @@ import (
 	"app/storage/postgres"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/mattn/go-colorable"
+	"io"
+	"os"
 )
 
 func main() {
@@ -42,6 +45,9 @@ func main() {
 	}
 
 	r := gin.New()
+	gin.ForceConsoleColor()
+	gin.DefaultWriter = colorable.NewColorableStdout()
+	gin.DefaultWriter = io.MultiWriter(os.Stdout)
 	r.MaxMultipartMemory = 8 << 20 // MiB
 
 	r.Use(gin.Recovery(), gin.Logger())
