@@ -21,26 +21,26 @@ import (
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) CreateOrder(c *gin.Context) {
-	var createCategory *models.CreateCategory
-	err := c.ShouldBindJSON(&createCategory)
+	var createOrder *models.CreateOrder
+	err := c.ShouldBindJSON(&createOrder)
 	if err != nil {
 		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
 		return
 	}
 
-	CategoryId, err := h.strg.Category().Create(c.Request.Context(), createCategory)
+	OrderId, err := h.strg.Order().Create(c.Request.Context(), createOrder)
 	if err != nil {
-		h.handlerResponse(c, "Error while creating Category", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while creating Order", http.StatusInternalServerError, err.Error())
 		return
 	}
-	Category, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: CategoryId})
+	Order, err := h.strg.Order().GetById(c.Request.Context(), &models.OrderPrimaryKey{OrderId: OrderId})
 	if err != nil {
-		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while getting Order", http.StatusInternalServerError, err.Error())
 		return
 
 	}
 
-	h.handlerResponse(c, "Category successfully created", http.StatusCreated, Category)
+	h.handlerResponse(c, "Order successfully created", http.StatusCreated, Order)
 }
 
 // UpdateOrder godoc
@@ -56,27 +56,27 @@ func (h *Handler) CreateOrder(c *gin.Context) {
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) UpdateOrder(c *gin.Context) {
-	var category models.UpdateCategory
-	err := c.ShouldBindJSON(&category)
+	var order models.UpdateOrder
+	err := c.ShouldBindJSON(&order)
 	if err != nil {
 		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
 		return
 	}
-	_, err = h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: category.Id})
+	_, err = h.strg.Order().GetById(c.Request.Context(), &models.OrderPrimaryKey{OrderId: order.OrderId})
 	if err != nil {
 		if err.Error() == fmt.Errorf("no rows in result set").Error() {
-			h.handlerResponse(c, "Category does not exist", http.StatusNotFound, nil)
+			h.handlerResponse(c, "Order does not exist", http.StatusNotFound, nil)
 			return
 		}
-		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while getting Order", http.StatusInternalServerError, err.Error())
 		return
 	}
-	resp, err := h.strg.Category().Update(c.Request.Context(), &category)
+	resp, err := h.strg.Order().Update(c.Request.Context(), &order)
 	if err != nil {
-		h.handlerResponse(c, "Error while updating Category", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while updating Order", http.StatusInternalServerError, err.Error())
 		return
 	}
-	h.handlerResponse(c, "Category successfully updated", http.StatusCreated, resp)
+	h.handlerResponse(c, "Order successfully updated", http.StatusCreated, resp)
 }
 
 // GetByIdOrder godoc
@@ -98,16 +98,16 @@ func (h *Handler) GetByIdOrder(c *gin.Context) {
 		return
 	}
 
-	category, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
+	order, err := h.strg.Order().GetById(c.Request.Context(), &models.OrderPrimaryKey{OrderId: id})
 	if err != nil {
 		if err.Error() == fmt.Errorf("no rows in result set").Error() {
-			h.handlerResponse(c, "Category does not exist", http.StatusNotFound, err.Error())
+			h.handlerResponse(c, "Order does not exist", http.StatusNotFound, err.Error())
 			return
 		}
-		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while getting Order", http.StatusInternalServerError, err.Error())
 		return
 	}
-	h.handlerResponse(c, "Category successfully retrieved", http.StatusOK, category)
+	h.handlerResponse(c, "Order successfully retrieved", http.StatusOK, order)
 }
 
 // GetListOrders godoc
@@ -132,15 +132,15 @@ func (h *Handler) GetListOrders(c *gin.Context) {
 		h.handlerResponse(c, "Error while parsing limit", http.StatusBadRequest, err.Error())
 		return
 	}
-	resp, err := h.strg.Category().GetList(c.Request.Context(), &models.CategoryGetListRequest{
+	resp, err := h.strg.Order().GetList(c.Request.Context(), &models.OrderGetListRequest{
 		Offset: offset,
 		Limit:  limit,
 	})
 	if err != nil {
-		h.handlerResponse(c, "Error while getting Categories", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while getting Orders", http.StatusInternalServerError, err.Error())
 		return
 	}
-	h.handlerResponse(c, "Category successfully retrieved", http.StatusOK, resp)
+	h.handlerResponse(c, "Order successfully retrieved", http.StatusOK, resp)
 }
 
 // DeleteOrder godoc
@@ -162,21 +162,21 @@ func (h *Handler) DeleteOrder(c *gin.Context) {
 		return
 	}
 
-	_, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
+	_, err := h.strg.Order().GetById(c.Request.Context(), &models.OrderPrimaryKey{OrderId: id})
 	if err != nil {
 		if err.Error() == fmt.Errorf("no rows in result set").Error() {
-			h.handlerResponse(c, "Category does not exist", http.StatusNotFound, nil)
+			h.handlerResponse(c, "Order does not exist", http.StatusNotFound, nil)
 			return
 		}
-		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while getting Order", http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	err = h.strg.Category().Delete(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
+	err = h.strg.Order().Delete(c.Request.Context(), &models.OrderPrimaryKey{OrderId: id})
 	if err != nil {
-		h.handlerResponse(c, "Error while deleting Category", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while deleting Order", http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	h.handlerResponse(c, "Category deleted successfully", http.StatusOK, nil)
+	h.handlerResponse(c, "Order deleted successfully", http.StatusOK, nil)
 }

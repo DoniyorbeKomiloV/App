@@ -137,7 +137,7 @@ func (h *Handler) GetListOrderItems(c *gin.Context) {
 		Limit:  limit,
 	})
 	if err != nil {
-		h.handlerResponse(c, "Error while getting Categories", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while getting OrderItems", http.StatusInternalServerError, err.Error())
 		return
 	}
 	h.handlerResponse(c, "OrderItem successfully retrieved", http.StatusOK, resp)
