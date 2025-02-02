@@ -58,7 +58,7 @@ func (s OrderRepo) GetById(ctx context.Context, req *models.OrderPrimaryKey) (*m
 
 	err := s.db.QueryRow(ctx, query, req.OrderId).Scan(
 		&orderId,
-		&orderId,
+		&userId,
 	)
 
 	if err != nil {
