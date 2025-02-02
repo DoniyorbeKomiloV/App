@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/cast"
-	"log"
 	"net/http"
 	"time"
 
@@ -33,32 +32,27 @@ func (h *Handler) Login(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&login) // parse req body to given type struct
 	if err != nil {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"status":  "Error",
-			"message": "Bad Request",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
 		return
 	}
-
+	if !helper.IsValidLogin(login.Username) {
+		h.handlerResponse(c, "A Username must start with a letter, the length of a Username should be from "+
+			"6 to 30 (inclusive) and may contain uppercase and lowercase letters, underscores and digits",
+			http.StatusBadRequest, "Username is not valid")
+		return
+	}
 	resp, err := h.strg.Users().GetById(context.Background(), &models.UserPrimaryKey{Username: login.Username})
 	if err != nil {
-		if err.Error() == "no rows in result set" {
-			c.JSON(http.StatusBadRequest, map[string]interface{}{
-				"status":  "Error",
-				"message": "User does not exist",
-				"data":    err.Error(),
-			})
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "User does not exist", http.StatusBadRequest, err.Error())
 			return
 		}
-		h.handlerResponse(c, "storage.user.getByID", http.StatusInternalServerError, err.Error())
+		h.handlerResponse(c, "Error while getting User", http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	fmt.Println(resp)
-
-	if resp.Password != login.Password {
-		h.handlerResponse(c, "Wrong password", http.StatusBadRequest, "Wrong password")
+	if !helper.CheckPasswordHash(login.Password, resp.Password) {
+		h.handlerResponse(c, "Password mismatch", http.StatusBadRequest, "Incorrect password")
 		return
 	}
 
@@ -82,7 +76,6 @@ func (h *Handler) Login(c *gin.Context) {
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) Register(c *gin.Context) {
-
 	var createUser models.CreateUser
 	var id string
 	err := c.ShouldBindJSON(&createUser)
@@ -90,6 +83,15 @@ func (h *Handler) Register(c *gin.Context) {
 		h.handlerResponse(c, "error user should bind json", http.StatusBadRequest, err.Error())
 		return
 	}
+	if !helper.IsValidLogin(createUser.Username) {
+		h.handlerResponse(c, "A Username must start with a letter, the length of a Username should be from "+
+			"6 to 30 (inclusive) and may contain uppercase and lowercase letters, underscores and digits",
+			http.StatusBadRequest, "Username is not valid")
+		return
+	}
+
+	// TO-DO
+	// implement better password checker !!!
 
 	if len(createUser.Password) < 7 {
 		h.handlerResponse(c, "Password should include more than 7 elements",
@@ -97,12 +99,20 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
+	hashedPassword, err := helper.HashPassword(createUser.Password)
+	if err != nil {
+		h.handlerResponse(c, "Error hashing password", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	createUser.Password = hashedPassword
+
 	resp, err := h.strg.Users().GetById(context.Background(), &models.UserPrimaryKey{Username: createUser.Username})
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
 			id, err = h.strg.Users().Create(context.Background(), &createUser)
 			if err != nil {
-				h.handlerResponse(c, "storage.user.create", http.StatusInternalServerError, err.Error())
+				h.handlerResponse(c, "Error while creating User", http.StatusInternalServerError, err.Error())
 				return
 			}
 		} else {
@@ -115,13 +125,14 @@ func (h *Handler) Register(c *gin.Context) {
 	}
 	resp, err = h.strg.Users().GetById(context.Background(), &models.UserPrimaryKey{Id: id})
 
-	h.handlerResponse(c, "create user response", http.StatusCreated, resp)
+	h.handlerResponse(c, "User successfully created", http.StatusCreated, resp)
 }
 
 func (h *Handler) Validate(c *gin.Context) {
 	tokenString, err := c.Cookie("Authorization")
 	if err != nil {
 		h.handlerResponse(c, "Authorization header not present", http.StatusUnauthorized, err.Error())
+		return
 	}
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
@@ -132,23 +143,26 @@ func (h *Handler) Validate(c *gin.Context) {
 		return []byte(h.cfg.SecretKey), nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		h.handlerResponse(c, "Invalid", http.StatusUnauthorized, err.Error())
+		return
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		if float64(time.Now().Unix()) >= claims["exp"].(float64) {
 			h.handlerResponse(c, "Token expired", http.StatusUnauthorized, "Token expired")
+			return
 		}
 		var userId = cast.ToString(claims["user_id"])
 		user, err := h.strg.Users().GetById(c, &models.UserPrimaryKey{Id: userId})
 		if err != nil {
 			h.handlerResponse(c, "User does not exist", http.StatusNotFound, "User does not exist")
+			return
 		}
 		c.Set("user_id", userId)
 		c.Set("user", user)
 		c.Next()
 	} else {
 		h.handlerResponse(c, "Authorization header not present", http.StatusUnauthorized, err.Error())
+		return
 	}
-
 }

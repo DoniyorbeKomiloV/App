@@ -2,9 +2,10 @@ package handler
 
 import (
 	"app/api/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
-	"strconv"
 )
 
 // CreateCategory godoc
@@ -23,47 +24,23 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 	var createCategory *models.CreateCategory
 	err := c.ShouldBindJSON(&createCategory)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"status":  "Error",
-			"message": "Bad Request",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
 		return
 	}
 
 	CategoryId, err := h.strg.Category().Create(c.Request.Context(), createCategory)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while creating Category", http.StatusInternalServerError, err.Error())
 		return
 	}
 	Category, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: CategoryId})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
 		return
 
 	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
-		return
-	}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "User created",
-		"data":    Category,
-	})
+	h.handlerResponse(c, "Category successfully created", http.StatusCreated, Category)
 }
 
 // UpdateCategory godoc
@@ -82,27 +59,24 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 	var category models.UpdateCategory
 	err := c.ShouldBindJSON(&category)
 	if err != nil {
-		c.JSON(400, map[string]interface{}{
-			"status":  "error",
-			"message": "Bad request",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
+		return
+	}
+	_, err = h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: category.Id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "Category does not exist", http.StatusNotFound, nil)
+			return
+		}
+		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
 		return
 	}
 	resp, err := h.strg.Category().Update(c.Request.Context(), &category)
 	if err != nil {
-		c.JSON(500, map[string]interface{}{
-			"status":  "error",
-			"message": "Error while UpdateCategory",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while updating Category", http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(200, map[string]interface{}{
-		"status":  "OK",
-		"message": "Success",
-		"data":    resp,
-	})
+	h.handlerResponse(c, "Category successfully updated", http.StatusCreated, resp)
 }
 
 // GetByIdCategory godoc
@@ -119,20 +93,21 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) GetByIdCategory(c *gin.Context) {
 	var id = c.Param("id")
-	category, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "Error",
-			"message": "Server internal Error",
-			"data":    err.Error(),
-		})
+	if _, err := uuid.Parse(id); err != nil {
+		h.handlerResponse(c, "Bad Request", http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "Category found",
-		"data":    category,
-	})
+
+	category, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "Category does not exist", http.StatusNotFound, err.Error())
+			return
+		}
+		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
+		return
+	}
+	h.handlerResponse(c, "Category successfully retrieved", http.StatusOK, category)
 }
 
 // GetListCategories godoc
@@ -147,31 +122,25 @@ func (h *Handler) GetByIdCategory(c *gin.Context) {
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) GetListCategories(c *gin.Context) {
-	offset, err := strconv.Atoi(c.Query("offset"))
+	offset, err := h.getOffsetQuery(c.Query("offset"))
 	if err != nil {
-		offset = 0
+		h.handlerResponse(c, "Error while parsing offset", http.StatusBadRequest, err.Error())
+		return
 	}
-	limit, err := strconv.Atoi(c.Query("limit"))
+	limit, err := h.getLimitQuery(c.Query("limit"))
 	if err != nil {
-		limit = 10
+		h.handlerResponse(c, "Error while parsing limit", http.StatusBadRequest, err.Error())
+		return
 	}
 	resp, err := h.strg.Category().GetList(c.Request.Context(), &models.CategoryGetListRequest{
 		Offset: offset,
 		Limit:  limit,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "Error",
-			"message": "Error while GetListCategories",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while getting Categories", http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "get list category response",
-		"data":    resp,
-	})
+	h.handlerResponse(c, "Category successfully retrieved", http.StatusOK, resp)
 }
 
 // DeleteCategory godoc
@@ -188,19 +157,26 @@ func (h *Handler) GetListCategories(c *gin.Context) {
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) DeleteCategory(c *gin.Context) {
 	var id = c.Param("id")
-
-	err := h.strg.Category().Delete(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Error while DeleteCategory",
-			"data":    err.Error(),
-		})
+	if _, err := uuid.Parse(id); err != nil {
+		h.handlerResponse(c, "Bad Request", http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusNoContent, map[string]interface{}{
-		"status":  "OK",
-		"message": "Success",
-		"data":    nil,
-	})
+
+	_, err := h.strg.Category().GetById(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "Category does not exist", http.StatusNotFound, nil)
+			return
+		}
+		h.handlerResponse(c, "Error while getting Category", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	err = h.strg.Category().Delete(c.Request.Context(), &models.CategoryPrimaryKey{Id: id})
+	if err != nil {
+		h.handlerResponse(c, "Error while deleting Category", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.handlerResponse(c, "Category deleted successfully", http.StatusOK, nil)
 }

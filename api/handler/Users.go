@@ -2,9 +2,10 @@ package handler
 
 import (
 	"app/api/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
-	"strconv"
 )
 
 // CreateUser godoc
@@ -23,47 +24,23 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	var createUser *models.CreateUser
 	err := c.ShouldBindJSON(&createUser)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, map[string]interface{}{
-			"status":  "Error",
-			"message": "Bad Request",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
 		return
 	}
 
 	UserId, err := h.strg.Users().Create(c.Request.Context(), createUser)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while creating User", http.StatusInternalServerError, err.Error())
 		return
 	}
 	User, err := h.strg.Users().GetById(c.Request.Context(), &models.UserPrimaryKey{Id: UserId})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while getting User", http.StatusInternalServerError, err.Error())
 		return
 
 	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
-		return
-	}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "User created",
-		"data":    User,
-	})
+	h.handlerResponse(c, "User successfully created", http.StatusCreated, User)
 }
 
 // UpdateUser godoc
@@ -82,27 +59,24 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	var user models.UpdateUser
 	err := c.ShouldBindJSON(&user)
 	if err != nil {
-		c.JSON(401, map[string]interface{}{
-			"status":  "error",
-			"message": "Bad request",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
+		return
+	}
+	_, err = h.strg.Users().GetById(c.Request.Context(), &models.UserPrimaryKey{Id: user.Id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "User does not exist", http.StatusNotFound, nil)
+			return
+		}
+		h.handlerResponse(c, "Error while getting User", http.StatusInternalServerError, err.Error())
 		return
 	}
 	resp, err := h.strg.Users().Update(c.Request.Context(), &user)
 	if err != nil {
-		c.JSON(500, map[string]interface{}{
-			"status":  "error",
-			"message": "Error while UpdateUser",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while updating User", http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(200, map[string]interface{}{
-		"status":  "OK",
-		"message": "Success",
-		"data":    resp,
-	})
+	h.handlerResponse(c, "User successfully updated", http.StatusCreated, resp)
 }
 
 // GetByIdUser godoc
@@ -119,20 +93,21 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) GetByIdUser(c *gin.Context) {
 	var id = c.Param("id")
-	user, err := h.strg.Users().GetById(c.Request.Context(), &models.UserPrimaryKey{Id: id})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "Error",
-			"message": "Server internal Error",
-			"data":    err.Error(),
-		})
+	if _, err := uuid.Parse(id); err != nil {
+		h.handlerResponse(c, "Bad Request", http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "User found",
-		"data":    user,
-	})
+
+	user, err := h.strg.Users().GetById(c.Request.Context(), &models.UserPrimaryKey{Id: id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "User does not exist", http.StatusNotFound, err.Error())
+			return
+		}
+		h.handlerResponse(c, "Error while getting User", http.StatusInternalServerError, err.Error())
+		return
+	}
+	h.handlerResponse(c, "User successfully retrieved", http.StatusOK, user)
 }
 
 // GetListUsers godoc
@@ -147,31 +122,25 @@ func (h *Handler) GetByIdUser(c *gin.Context) {
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) GetListUsers(c *gin.Context) {
-	offset, err := strconv.Atoi(c.Query("offset"))
+	offset, err := h.getOffsetQuery(c.Query("offset"))
 	if err != nil {
-		offset = 0
+		h.handlerResponse(c, "Error while parsing offset", http.StatusBadRequest, err.Error())
+		return
 	}
-	limit, err := strconv.Atoi(c.Query("limit"))
+	limit, err := h.getLimitQuery(c.Query("limit"))
 	if err != nil {
-		limit = 10
+		h.handlerResponse(c, "Error while parsing limit", http.StatusBadRequest, err.Error())
+		return
 	}
 	resp, err := h.strg.Users().GetList(c.Request.Context(), &models.UserGetListRequest{
 		Offset: offset,
 		Limit:  limit,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "Error",
-			"message": "Error while GetListUsers",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while getting Users", http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "get list user response",
-		"data":    resp,
-	})
+	h.handlerResponse(c, "User successfully retrieved", http.StatusOK, resp)
 }
 
 // DeleteUser godoc
@@ -188,19 +157,26 @@ func (h *Handler) GetListUsers(c *gin.Context) {
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) DeleteUser(c *gin.Context) {
 	var id = c.Param("id")
-
-	err := h.strg.Users().Delete(c.Request.Context(), &models.UserPrimaryKey{Id: id})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Error while DeleteUser",
-			"data":    err.Error(),
-		})
+	if _, err := uuid.Parse(id); err != nil {
+		h.handlerResponse(c, "Bad Request", http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusNoContent, map[string]interface{}{
-		"status":  "OK",
-		"message": "Success",
-		"data":    nil,
-	})
+
+	_, err := h.strg.Users().GetById(c.Request.Context(), &models.UserPrimaryKey{Id: id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "User does not exist", http.StatusNotFound, nil)
+			return
+		}
+		h.handlerResponse(c, "Error while getting User", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	err = h.strg.Users().Delete(c.Request.Context(), &models.UserPrimaryKey{Id: id})
+	if err != nil {
+		h.handlerResponse(c, "Error while deleting User", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.handlerResponse(c, "User deleted successfully", http.StatusOK, nil)
 }

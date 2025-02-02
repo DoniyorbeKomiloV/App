@@ -2,9 +2,10 @@ package handler
 
 import (
 	"app/api/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
-	"strconv"
 )
 
 // CreateBook godoc
@@ -23,47 +24,22 @@ func (h *Handler) CreateBook(c *gin.Context) {
 	var createBook *models.CreateBook
 	err := c.ShouldBindJSON(&createBook)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"status":  "Error",
-			"message": "Bad Request",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
 		return
 	}
 
 	BookId, err := h.strg.Books().Create(c.Request.Context(), createBook)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while creating Book", http.StatusInternalServerError, err.Error())
 		return
 	}
 	Book, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: BookId})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
-		return
-
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Server internal",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while getting Book", http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "User created",
-		"data":    Book,
-	})
+	h.handlerResponse(c, "Book successfully created", http.StatusCreated, Book)
 }
 
 // UpdateBook godoc
@@ -82,27 +58,24 @@ func (h *Handler) UpdateBook(c *gin.Context) {
 	var book models.UpdateBook
 	err := c.ShouldBindJSON(&book)
 	if err != nil {
-		c.JSON(401, map[string]interface{}{
-			"status":  "error",
-			"message": "Bad request",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "JSON format is not valid", http.StatusBadRequest, err.Error())
+		return
+	}
+	_, err = h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: book.Id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "Book does not exist", http.StatusNotFound, nil)
+			return
+		}
+		h.handlerResponse(c, "Error while getting Book", http.StatusInternalServerError, err.Error())
 		return
 	}
 	resp, err := h.strg.Books().Update(c.Request.Context(), &book)
 	if err != nil {
-		c.JSON(500, map[string]interface{}{
-			"status":  "error",
-			"message": "Error while UpdateBook",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while updating Book", http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(200, map[string]interface{}{
-		"status":  "OK",
-		"message": "Success",
-		"data":    resp,
-	})
+	h.handlerResponse(c, "Book successfully updated", http.StatusCreated, resp)
 }
 
 // GetByIdBook godoc
@@ -119,20 +92,21 @@ func (h *Handler) UpdateBook(c *gin.Context) {
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) GetByIdBook(c *gin.Context) {
 	var id = c.Param("id")
-	book, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: id})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "Error",
-			"message": "Server internal Error",
-			"data":    err.Error(),
-		})
+	if _, err := uuid.Parse(id); err != nil {
+		h.handlerResponse(c, "Bad Request", http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "Book found",
-		"data":    book,
-	})
+
+	book, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "Book does not exist", http.StatusNotFound, err.Error())
+			return
+		}
+		h.handlerResponse(c, "Error while getting Book", http.StatusInternalServerError, err.Error())
+		return
+	}
+	h.handlerResponse(c, "Book successfully retrieved", http.StatusOK, book)
 }
 
 // GetListBooks godoc
@@ -147,31 +121,25 @@ func (h *Handler) GetByIdBook(c *gin.Context) {
 // @Response 400 {object} Response{data=string} "Bad Request"
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) GetListBooks(c *gin.Context) {
-	offset, err := strconv.Atoi(c.Query("offset"))
+	offset, err := h.getOffsetQuery(c.Query("offset"))
 	if err != nil {
-		offset = 0
+		h.handlerResponse(c, "Error while parsing offset", http.StatusBadRequest, err.Error())
+		return
 	}
-	limit, err := strconv.Atoi(c.Query("limit"))
+	limit, err := h.getLimitQuery(c.Query("limit"))
 	if err != nil {
-		limit = 10
+		h.handlerResponse(c, "Error while parsing limit", http.StatusBadRequest, err.Error())
+		return
 	}
 	resp, err := h.strg.Books().GetList(c.Request.Context(), &models.BookGetListRequest{
 		Offset: offset,
 		Limit:  limit,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "Error",
-			"message": "Error while GetListBooks",
-			"data":    err.Error(),
-		})
+		h.handlerResponse(c, "Error while getting Books", http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"status":  "OK",
-		"message": "get list book response",
-		"data":    resp,
-	})
+	h.handlerResponse(c, "Book successfully retrieved", http.StatusOK, resp)
 }
 
 // DeleteBook godoc
@@ -188,19 +156,26 @@ func (h *Handler) GetListBooks(c *gin.Context) {
 // @Failure 500 {object} Response{data=string} "Server error"
 func (h *Handler) DeleteBook(c *gin.Context) {
 	var id = c.Param("id")
-
-	err := h.strg.Books().Delete(c.Request.Context(), &models.BookPrimaryKey{Id: id})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"status":  "error",
-			"message": "Error while DeleteBook",
-			"data":    err.Error(),
-		})
+	if _, err := uuid.Parse(id); err != nil {
+		h.handlerResponse(c, "Bad Request", http.StatusBadRequest, err.Error())
 		return
 	}
-	c.JSON(http.StatusNoContent, map[string]interface{}{
-		"status":  "OK",
-		"message": "Success",
-		"data":    nil,
-	})
+
+	_, err := h.strg.Books().GetById(c.Request.Context(), &models.BookPrimaryKey{Id: id})
+	if err != nil {
+		if err.Error() == fmt.Errorf("no rows in result set").Error() {
+			h.handlerResponse(c, "Book does not exist", http.StatusNotFound, nil)
+			return
+		}
+		h.handlerResponse(c, "Error while getting Book", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	err = h.strg.Books().Delete(c.Request.Context(), &models.BookPrimaryKey{Id: id})
+	if err != nil {
+		h.handlerResponse(c, "Error while deleting Book", http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.handlerResponse(c, "Book deleted successfully", http.StatusOK, nil)
 }

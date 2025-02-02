@@ -50,15 +50,23 @@ func (h *Handler) getLimitQuery(limit string) (int, error) {
 func (h *Handler) handlerResponse(c *gin.Context, path string, code int, message interface{}) {
 	response := Response{
 		Status:      code,
-		Data:        message,
 		Description: path,
+		Data:        message,
 	}
 
 	switch {
+	case code < 200:
+		h.logger.Debug(path, logger.Any("debug", response))
 	case code < 300:
+		h.logger.Debug(path, logger.Any("info", response))
+	case code < 400:
 		h.logger.Info(path, logger.Any("info", response))
-	case code >= 400:
+	case code < 500:
+		h.logger.Warn(path, logger.Any("warn", response))
+	case code < 600:
 		h.logger.Error(path, logger.Any("error", response))
+	default:
+		h.logger.Info(path, logger.Any("custom", response))
 	}
 
 	c.JSON(code, response)
@@ -68,7 +76,7 @@ func (h *Handler) SendMessageToMail(subject string, sEmail string, sPassword str
 	// Set up the email message
 	messageBody := Message
 
-	// Create a new email message using gomail
+	// Create a new email message using 'gomail'
 	m := gomail.NewMessage()
 	m.SetHeader("From", sEmail)
 	m.SetHeader("To", To)
@@ -76,7 +84,7 @@ func (h *Handler) SendMessageToMail(subject string, sEmail string, sPassword str
 	m.SetBody("text/plain", messageBody)
 
 	// Set up the email sending configuration
-	d := gomail.NewDialer("smtp.gmail.com", 587, sEmail, sPassword)
+	d := gomail.NewDialer(sEmail, 587, sEmail, sPassword)
 
 	// Send the email
 	if err := d.DialAndSend(m); err != nil {
